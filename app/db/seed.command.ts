@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { db } from './db';
 import { Tag, Tweet } from './interfaces';
-import { tags, tweets, tweetsToTags } from "./schema";
+import { db, tags, tweets, tweetsToTags } from "./schema";
 
 let serialId = 1;
 

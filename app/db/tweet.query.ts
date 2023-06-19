@@ -10,7 +10,7 @@ interface Filter {
 export async function getTweets(filter?: Filter) {
 
     const filterTweets = filter && !!filter.search;
-    const filterTags = filter && !!filter.tags;
+    const filterTags = filter && !!filter.tags && filter.tags.length > 0;
 
     // idk type...
     let relevantQuery: any = {
@@ -22,12 +22,12 @@ export async function getTweets(filter?: Filter) {
         where: (tweets, { or, sql, and }) =>
             and(
                 // apply filter only if we have something to filter by
-                filterTweets && or(
+                !filterTweets ? true : or(
                     like(tweets.title, `%${filter.search}%`),
                     like(tweets.description, `%${filter.search}%`),
                 ),
                 // if we will filter tags, filter only tweets that do contain those tags
-                filterTags && (sql`json_array_length(${tweets.tweetsToTags}) > 0`)
+                !filterTags ? true : (sql`json_array_length(${tweets.tweetsToTags}) > 0`)
             )
     }
 
