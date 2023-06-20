@@ -7,7 +7,7 @@ export default async function Home() {
 
   const tweets = await getTweets({
     search: "",
-    tags: [2, 3, 4],
+    tags: ["billion", "sari"],
   });
 
   return (

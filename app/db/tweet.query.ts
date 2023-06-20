@@ -1,6 +1,6 @@
-import { inArray, like } from 'drizzle-orm';
+import { and, exists, inArray, like } from 'drizzle-orm';
 import { Tweet } from './interfaces';
-import { db } from "./schema";
+import { db, tags } from "./schema";
 
 interface Filter {
     search: string;
@@ -31,22 +31,32 @@ export async function getTweets(filter?: Filter) {
             )
     }
 
+
     // include tweet tags and filter them, if we have something to filter by
     if (filterTags) {
         relevantQuery = {
             ...relevantQuery,
             with: {
                 tweetsToTags: {
-                    where: (tweetsToTags, { }) => inArray(tweetsToTags.tagId, filter.tags)
+                    where: (tweetsToTags, { eq }) => exists(
+                        db.select().from(tags).where(
+                            and(
+                                inArray(tags.name, filter.tags),
+                                eq(tweetsToTags.tagId, tags.id)
+                            ))
+                    )
                 }
             },
         };
     }
 
-    const relevantIds = (await db.query.tweets.findMany(relevantQuery)).map(x => x.id as number);
-    if (relevantIds.length == 0) {
+    const result = await db.query.tweets.findMany(relevantQuery);
+    const relevantIds = result.map(x => x.id as number);
+    if (result.length == 0) {
         return [];
     }
+
+    console.log(JSON.stringify(result, null, 2));
 
     // get tweets with tags
     const relevantTweets = await db.query.tweets.findMany({
@@ -59,6 +69,7 @@ export async function getTweets(filter?: Filter) {
         },
         where: (tweets, { }) => inArray(tweets.id, relevantIds),
     })
+
 
     return toTweets(relevantTweets); // shape, flatten, map etc..
 }
